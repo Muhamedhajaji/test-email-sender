@@ -13,7 +13,7 @@
 
       body {
         font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #667eea 0%, #1068ec 100%);
         min-height: 100vh;
         display: flex;
         align-items: center;
@@ -77,7 +77,7 @@
       }
 
       .btn {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #667eea 0%, #1068ec 100%);
         color: white;
         padding: 15px 40px;
         border: none;
@@ -183,12 +183,46 @@
         position: absolute;
         left: 0;
       }
+
+      .button-group {
+        display: flex;
+        justify-content: space-between;
+      }
+
+      .lang-btn {
+        background: linear-gradient(135deg, #667eea 0%, #1068ec 100%);
+        color: white;
+        padding: 15px 20px;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        width: 48%;
+      }
+
+      .lang-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+      }
+
+      .lang-btn:active {
+        transform: translateY(0);
+      }
+
+      .lang-btn:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+      }
     </style>
   </head>
   <body>
     <div class="container">
-      <div class="logo">📧</div>
-      <h1>Send New Home Page Launched Test Email</h1>
+      <div class="logo"><img src="Logo.png" width="200" alt="" /></div>
+      <h1>Test Send Launched Email</h1>
       <p class="subtitle">Enter your email to receive our report</p>
 
       <form id="emailForm">
@@ -203,7 +237,14 @@
             autocomplete="email" />
         </div>
 
-        <button type="submit" class="btn" id="sendBtn">Send HTML Email</button>
+        <div class="button-group">
+          <button type="button" class="btn lang-btn" style="font-size: 13px" id="enBtn" data-lang="en">
+            Send English Email
+          </button>
+          <button type="button" class="btn lang-btn" style="font-size: 13px" id="arBtn" data-lang="ar">
+            Send Arabic Email
+          </button>
+        </div>
       </form>
 
       <div class="loading" id="loading">
@@ -217,7 +258,6 @@
         <h3>What you'll receive:</h3>
         <ul>
           <li>Professional HTML email</li>
-          <li>Embedded images (base64)</li>
           <li>Responsive design</li>
           <li>Instant delivery</li>
         </ul>
@@ -227,14 +267,21 @@
     <script>
       // REPLACE THIS WITH YOUR ACTUAL GOOGLE APPS SCRIPT WEB APP URL
       const API_URL =
-        "https://script.google.com/macros/s/AKfycbwmSfmnoR9Je-jYpQbPJwkMX3eIFJafHFnd8V3ynu7Jzgl4hOaVCR5r8vkKWFIcWhbx/exec";
+        "https://script.google.com/macros/s/AKfycbw9TuBhuOyuLQ3eSP0Iic3DCyBxTRZ0wAkWhkv-W8mkqgu7RV2d2379FuUWSZCoZ-SN/exec";
 
-      // Handle form submission
-      document.getElementById("emailForm").addEventListener("submit", async function (e) {
-        e.preventDefault();
+      // Handle language button clicks
+      document.querySelectorAll(".lang-btn").forEach((button) => {
+        button.addEventListener("click", async function (e) {
+          const lang = this.getAttribute("data-lang");
+          sendEmail(lang);
+        });
+      });
 
+      // Function to send email with language preference
+      async function sendEmail(lang) {
         const email = document.getElementById("email").value.trim();
-        const sendBtn = document.getElementById("sendBtn");
+        const enBtn = document.getElementById("enBtn");
+        const arBtn = document.getElementById("arBtn");
         const loading = document.getElementById("loading");
         const message = document.getElementById("message");
 
@@ -245,28 +292,30 @@
         }
 
         // Show loading state
-        sendBtn.disabled = true;
-        sendBtn.textContent = "Sending...";
+        enBtn.disabled = true;
+        arBtn.disabled = true;
         loading.style.display = "block";
         message.style.display = "none";
 
         try {
           // Send request to Google Apps Script
+          const params = new URLSearchParams();
+          params.append("action", "sendHtmlEmail");
+          params.append("email", email);
+          params.append("lang", lang);
+
           const response = await fetch(API_URL, {
             method: "POST",
             headers: {
-              "Content-Type": "application/json",
+              "Content-Type": "application/x-www-form-urlencoded",
             },
-            body: JSON.stringify({
-              action: "sendHtmlEmail",
-              email: email,
-            }),
+            body: params.toString(),
           });
 
           const result = await response.json();
 
           if (result.success) {
-            showMessage("HTML email sent successfully! Please check your inbox.", "success");
+            showMessage(`HTML email (${lang}) sent successfully! Please check your inbox.`, "success");
             document.getElementById("email").value = ""; // Clear the form
           } else {
             showMessage(`Error: ${result.message || "Failed to send email"}`, "error");
@@ -276,11 +325,11 @@
           showMessage("Network error. Please check your connection and try again.", "error");
         } finally {
           // Reset loading state
-          sendBtn.disabled = false;
-          sendBtn.textContent = "Send HTML Email";
+          enBtn.disabled = false;
+          arBtn.disabled = false;
           loading.style.display = "none";
         }
-      });
+      }
 
       // Utility function to validate email
       function isValidEmail(email) {
@@ -306,19 +355,24 @@
       // Real-time email validation feedback
       document.getElementById("email").addEventListener("input", function (e) {
         const email = e.target.value;
-        const sendBtn = document.getElementById("sendBtn");
+        const btns = document.querySelectorAll(".lang-btn");
 
         if (email && isValidEmail(email)) {
-          sendBtn.style.background = "linear-gradient(135deg, #667eea 0%, #764ba2 100%)";
+          btns.forEach((btn) => {
+            btn.style.background = "linear-gradient(135deg, #667eea 0%, #1068EC 100%)";
+          });
         } else {
-          sendBtn.style.background = "#ccc";
+          btns.forEach((btn) => {
+            btn.style.background = "#ccc";
+          });
         }
       });
 
       // Enter key support
       document.getElementById("email").addEventListener("keypress", function (e) {
-        if (e.key === "Enter") {
-          document.getElementById("emailForm").dispatchEvent(new Event("submit"));
+        if (e.key === "Enter" && isValidEmail(e.target.value)) {
+          // Default to English email on enter key
+          sendEmail("en");
         }
       });
     </script>
